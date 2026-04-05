@@ -1,11 +1,19 @@
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+import "./globals.css";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "ComptaLibre.ma - Relevé PDF vers Excel",
+  description: "Convertissez vos relevés bancaires marocains en fichiers Excel avec l'IA.",
+};
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="fr">
-      <head>
-        {/* This bypasses the need for a local CSS file entirely */}
-        <script src="https://cdn.tailwindcss.com"></script>
-      </head>
-      <body className="bg-slate-50 text-slate-900 font-sans">
+      <body className="antialiased">
         {children}
       </body>
     </html>

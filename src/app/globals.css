@@ -1,6 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 :root {
   --foreground-rgb: 0, 0, 0;
@@ -11,4 +9,12 @@
 body {
   color: rgb(var(--foreground-rgb));
   background: #f8fafc; /* Professional light gray */
+}
+
+/* Custom styles that aren't easily handled by Tailwind v4 yet or specific to this app */
+@layer base {
+  body.dark {
+    background-color: #0e0e11;
+    color: #f1f5f9;
+  }
 }
