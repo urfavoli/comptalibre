@@ -16,7 +16,7 @@ interface ResultsProps {
   data: Transaction[];
   isVerified: boolean;
   calculatedEndBalance: string;
-  downloadCSV: () => void;
+  downloadExcel: () => void; // Changé de downloadCSV à downloadExcel
   shareOnWhatsApp: () => void;
 }
 
@@ -25,7 +25,7 @@ export const Results: React.FC<ResultsProps> = ({
   data, 
   isVerified, 
   calculatedEndBalance, 
-  downloadCSV, 
+  downloadExcel, 
   shareOnWhatsApp 
 }) => {
   if (data.length === 0) return null;
@@ -34,11 +34,13 @@ export const Results: React.FC<ResultsProps> = ({
     <section className={`py-16 ${isDark ? 'bg-[#1c1d24]' : 'bg-blue-50'}`}>
       <div className="max-w-7xl mx-auto px-6">
         <h2 className="text-3xl font-black mb-10 text-center">Vos Données Converties</h2>
+        
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 mb-8">
           <div className={`p-6 lg:col-span-1 rounded-3xl border ${isDark ? 'bg-[#14151a] border-white/10' : 'bg-white border-slate-200'}`}>
             <p className="text-xs font-bold opacity-60">NOMBRE DE LIGNES</p>
             <p className="text-4xl font-black">{data.length}</p>
           </div>
+
           <div className={`p-6 lg:col-span-2 rounded-3xl border ${isVerified ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-orange-500/10 border-orange-500/20'}`}>
             <p className={`text-xs font-bold ${isVerified ? 'text-emerald-500' : 'text-orange-500'} flex items-center gap-1`}>
               {isVerified ? <CheckCircle className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
@@ -49,14 +51,21 @@ export const Results: React.FC<ResultsProps> = ({
             </p>
             <p className="text-xs opacity-60 mt-1">Solde final calculé : {calculatedEndBalance} DH</p>
           </div>
+
           <div className="grid grid-cols-1 lg:col-span-1 gap-4">
-            <button onClick={downloadCSV} className="w-full h-full flex items-center justify-center gap-2 py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-3xl transition-transform active:scale-95 shadow-md">
+            <button 
+              onClick={downloadExcel} 
+              className="w-full h-full flex items-center justify-center gap-2 py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-3xl transition-transform active:scale-95 shadow-md"
+            >
               <Download className="w-5 h-5" />
-              Exporter (.CSV)
+              Exporter (.XLSX)
             </button>
-            <button onClick={shareOnWhatsApp} className="w-full flex items-center justify-center gap-2 py-3 bg-opacity-10 bg-black text-black dark:text-white font-black rounded-3xl text-sm transition-transform active:scale-95 hover:bg-opacity-20 border border-current opacity-70">
+            <button 
+              onClick={shareOnWhatsApp} 
+              className="w-full flex items-center justify-center gap-2 py-3 bg-opacity-10 bg-black text-black dark:text-white font-black rounded-3xl text-sm transition-transform active:scale-95 hover:bg-opacity-20 border border-current opacity-70"
+            >
               <MessageCircle className="w-4 h-4" />
-              Partager sur WhatsApp
+              WhatsApp
             </button>
           </div>
         </div>
@@ -68,7 +77,8 @@ export const Results: React.FC<ResultsProps> = ({
                 <th className="p-5 border-b border-white/5">Date</th>
                 <th className="p-5 border-b border-white/5">Libellé Complet</th>
                 <th className="p-5 border-b border-white/5">PCM</th>
-                <th className="p-5 border-b border-white/5 text-right">Montant (DH)</th>
+                <th className="p-5 border-b border-white/5 text-right">Débit</th>
+                <th className="p-5 border-b border-white/5 text-right">Crédit</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-500/10">
@@ -77,12 +87,15 @@ export const Results: React.FC<ResultsProps> = ({
                   <td className="p-5 opacity-70 font-mono">{row.date}</td>
                   <td className="p-5 font-semibold leading-relaxed">{row.label}</td>
                   <td className="p-5">
-                    <span className="bg-blue-100 text-blue-700 px-3 py-1.5 rounded-md font-mono text-sm font-bold">
+                    <span className="bg-blue-100 text-blue-700 px-3 py-1.5 rounded-md font-mono text-xs font-bold">
                       {row.pcm}
                     </span>
                   </td>
-                  <td className={`p-5 text-right font-black ${row.debit > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
-                    {row.debit > 0 ? `-${row.debit}` : `+${row.credit}`}
+                  <td className="p-5 text-right font-black text-red-600">
+                    {row.debit > 0 ? row.debit.toFixed(2) : "-"}
+                  </td>
+                  <td className="p-5 text-right font-black text-emerald-600">
+                    {row.credit > 0 ? row.credit.toFixed(2) : "-"}
                   </td>
                 </tr>
               ))}

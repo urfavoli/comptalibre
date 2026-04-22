@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import axios from 'axios';
+import * as XLSX from 'xlsx';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Navbar } from '@/components/Navbar';
 import { Hero } from '@/components/Hero';
@@ -13,13 +14,12 @@ export default function ComptaLibre() {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [isDark, setIsDark] = useState(false); 
-  const [data, setData] = useState([]);
+  const [data, setData] = useState<any[]>([]);
   const [error, setError] = useState("");
   const [startBalance, setStartBalance] = useState("");
   const [endBalance, setEndBalance] = useState("");
 
-  
-  // --- LOGIQUE MÉMOÏSÉE ---
+  // --- LOGIQUE CALCULS ---
   const totals = useMemo(() => {
     return data.reduce((acc, curr) => ({
       debit: acc.debit + (Number(curr.debit) || 0),
@@ -37,7 +37,7 @@ export default function ComptaLibre() {
     return Math.abs(parseFloat(calculatedEndBalance) - parseFloat(endBalance)) < 0.01;
   }, [calculatedEndBalance, endBalance, data]);
 
-  // --- THÈME ---
+  // --- THEME ---
   useEffect(() => {
     const stored = localStorage.getItem('theme');
     if (stored) setIsDark(stored === 'dark');
@@ -48,82 +48,104 @@ export default function ComptaLibre() {
     document.body.classList.toggle('dark', isDark);
   }, [isDark]);
 
-  // --- COEUR DE L'ANALYSE (AVEC SYSTÈME ANTI-CRASH) ---
+  // --- TRAITEMENT DU FICHIER ---
   const handleProcess = async () => {
     if (!file) return;
     setLoading(true);
     setError("");
     setData([]);
 
-    const buffer = await file.arrayBuffer();
-    const base64 = btoa(new Uint8Array(buffer).reduce((d, b) => d + String.fromCharCode(b), ''));
-    
-    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-    const prompt = "EXTRAIS LES TRANSACTIONS EN JSON UNIQUEMENT. FORMAT: [{\"date\": \"...\", \"label\": \"...\", \"pcm\": \"...\", \"debit\": 0, \"credit\": 0}]";
-
-    // Fonction de tentative (Retry) pour contrer l'erreur 429
-    const makeRequest = async (retries = 1): Promise<any> => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = async () => {
       try {
-        return await axios.post(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-8b:generateContent?key=${apiKey}`,
-  { contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: "application/pdf", data: base64 } }] }] }
-);
-          { timeout: 45000 } // 45s de patience
-       
-      } catch (err: any) {
-        if (err.response?.status === 429 && retries > 0) {
-          await new Promise(resolve => setTimeout(resolve, 2000)); // Attendre 2s
-          return makeRequest(retries - 1);
+        const base64Data = (reader.result as string).split(',')[1];
+        
+        const prompt = `Extraits les transactions du document en JSON uniquement. 
+        Format obligatoire : [{"date": "JJ/MM/AAAA", "label": "Libellé", "pcm": "Compte", "debit": 0, "credit": 0}]
+        Si une ligne est un crédit, mets debit à 0. Si c'est un débit, mets credit à 0.`;
+
+        // APPEL À TA ROUTE API INTERNE
+        const response = await axios.post('/api/extract', {
+          base64: base64Data,
+          prompt: prompt
+        }, { timeout: 60000 });
+
+        // MODIFICATION ICI : 
+        // Ta route API renvoie déjà le JSON parsé (le tableau), 
+        // donc on l'utilise directement sans chercher "candidates"
+        const resultData = response.data;
+        
+        if (!resultData || !Array.isArray(resultData)) {
+          throw new Error("Le format reçu n'est pas un tableau valide.");
         }
-        throw err;
+
+        setData(resultData);
+
+        setTimeout(() => {
+          document.getElementById('results-section')?.scrollIntoView({ behavior: 'smooth' });
+        }, 300);
+
+      } catch (err: any) {
+        console.error("Error:", err);
+        // On affiche le message d'erreur précis venant du serveur
+        const message = err.response?.data?.error || err.message || "Erreur lors de l'analyse.";
+        setError(message);
+      } finally {
+        setLoading(false);
       }
     };
+  };
 
-    try {
-      const response = await makeRequest();
-      const rawText = response.data.candidates?.[0]?.content?.parts?.[0]?.text;
-      
-      if (!rawText) throw new Error("Réponse vide de l'IA.");
+  // --- EXPORT EXCEL ---
+  const downloadExcel = () => {
+    if (data.length === 0) return;
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Extraction_Comptable");
+    XLSX.writeFile(workbook, `Compta_Export_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
 
-      let cleanText = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
-      const start = cleanText.indexOf('[');
-      const end = cleanText.lastIndexOf(']') + 1;
-      
-      if (start === -1) throw new Error("Format de données illisible.");
-      
-      setData(JSON.parse(cleanText.substring(start, end)));
-
-      setTimeout(() => {
-        document.getElementById('results-section')?.scrollIntoView({ behavior: 'smooth' });
-      }, 300);
-
-    } catch (err: any) {
-      console.error("Crash Log:", err);
-      if (err.response?.status === 429) {
-        setError("Serveur Google saturé. Réessayez dans 1 minute (Quota Gratuit).");
-      } else if (err.code === 'ECONNABORTED') {
-        setError("Connexion trop lente. Réduisez la taille du PDF.");
-      } else {
-        setError("Erreur : " + (err.message || "Analyse échouée"));
-      }
-    } finally {
-      setLoading(false);
-    }
+  const shareOnWhatsApp = () => {
+    const text = `Salut, j'ai extrait ${data.length} transactions avec ComptaLibre. Solde final : ${calculatedEndBalance} DH.`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   };
 
   return (
     <div className={`min-h-screen transition-all ${isDark ? 'bg-[#0e0e11] text-white' : 'bg-[#fcfcff] text-slate-900'}`}>
       <Navbar isDark={isDark} toggleTheme={() => setIsDark(!isDark)} />
       <main className="pb-20">
-        <Hero isDark={isDark} file={file} setFile={setFile} loading={loading} error={error} handleProcess={handleProcess} setStartBalance={setStartBalance} setEndBalance={setEndBalance} />
+        <Hero 
+          isDark={isDark} 
+          file={file} 
+          setFile={setFile} 
+          loading={loading} 
+          error={error} 
+          handleProcess={handleProcess} 
+          setStartBalance={setStartBalance} 
+          setEndBalance={setEndBalance} 
+        />
+        
         <AnimatePresence>
           {data.length > 0 && (
-            <div id="results-section" className="scroll-mt-20">
-              <Results isDark={isDark} data={data} isVerified={isVerified} calculatedEndBalance={calculatedEndBalance} 
-                downloadCSV={() => {/* ta fonction download */}} shareOnWhatsApp={() => {/* ta fonction whatsapp */}} />
-            </div>
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              id="results-section" 
+              className="scroll-mt-20"
+            >
+              <Results 
+                isDark={isDark} 
+                data={data} 
+                isVerified={isVerified} 
+                calculatedEndBalance={calculatedEndBalance} 
+                downloadExcel={downloadExcel} 
+                shareOnWhatsApp={shareOnWhatsApp} 
+              />
+            </motion.div>
           )}
         </AnimatePresence>
+        
         <Features isDark={isDark} />
       </main>
       <Footer isDark={isDark} />
