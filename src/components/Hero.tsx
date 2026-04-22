@@ -40,15 +40,17 @@ export const Hero: React.FC<HeroProps> = ({
             className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest ${isDark ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : 'bg-blue-50 text-blue-700 border border-blue-100'}`}
           >
             <Sparkles size={14} />
-            Propulsé par Gemini 2.0 AI
+            Propulsé par Gemini 2.5 AI
           </motion.div>
 
+          {/* BALISE H1 OPTIMISÉE SEO */}
           <motion.h1 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
             className={`text-5xl lg:text-6xl font-black tracking-tighter leading-[1.1] ${isDark ? 'text-white' : 'text-slate-900'}`}
           >
+            <span className="text-blue-600">ComptaLibre.</span> <br />
             La fin de la saisie <br />
             <span className="text-blue-600 italic">manuelle.</span>
           </motion.h1>
@@ -59,7 +61,7 @@ export const Hero: React.FC<HeroProps> = ({
             transition={{ delay: 0.2 }}
             className={`text-lg leading-relaxed opacity-70 ${isDark ? 'text-slate-300' : 'text-slate-600'}`}
           >
-            Transformez vos relevés PDF en écritures comptables Excel en un clin d'œil. 
+            L'outil indispensable pour les comptables au Maroc. Transformez vos relevés PDF en écritures Excel en un clin d'œil. 
             Précis, sécurisé et 100% adapté au Plan Comptable Marocain.
           </motion.p>
 
@@ -90,9 +92,9 @@ export const Hero: React.FC<HeroProps> = ({
           <div className={`relative p-1 rounded-[2.5rem] ${isDark ? 'bg-gradient-to-b from-blue-500/20 to-transparent' : 'bg-slate-200'}`}>
             <div className={`p-8 lg:p-10 rounded-[2.4rem] shadow-2xl ${isDark ? 'bg-[#14151a]' : 'bg-white'}`}>
               
-              <h3 className={`text-xl font-bold mb-6 ${isDark ? 'text-white' : 'text-slate-900'}`}>
+              <h2 className={`text-xl font-bold mb-6 ${isDark ? 'text-white' : 'text-slate-900'}`}>
                 Charger un relevé bancaire
-              </h3>
+              </h2>
               
               <div className="relative mb-6">
                 <input 
