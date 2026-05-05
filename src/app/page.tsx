@@ -1,8 +1,8 @@
 "use client";
 
+
 import React, { useState, useMemo, useEffect } from 'react';
 import axios from 'axios';
-import * as XLSX from 'xlsx';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Navbar } from '@/components/Navbar';
 import { Hero } from '@/components/Hero';
@@ -98,8 +98,12 @@ export default function ComptaLibre() {
   };
 
   // --- EXPORT EXCEL ---
-  const downloadExcel = () => {
+  const downloadExcel = async () => {
     if (data.length === 0) return;
+    
+    // Le navigateur ne téléchargera cette lourde bibliothèque QUE si l'utilisateur clique sur le bouton
+    const XLSX = await import('xlsx'); 
+    
     const worksheet = XLSX.utils.json_to_sheet(data);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Extraction_Comptable");
