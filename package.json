@@ -16,6 +16,7 @@
     "@mui/material": "^6.4.2",
     "@supabase/supabase-js": "^2.48.1",
     "@tailwindcss/postcss": "^4.2.2",
+    "@vercel/analytics": "^2.0.1",
     "aos": "^2.3.4",
     "axios": "^1.14.0",
     "clsx": "^2.1.1",
