@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- Page d'accueil -->
+  <url>
+    <loc>https://comptalibre.vercel.app/</loc>
+    <lastmod>2024-05-20</lastmod>
+    <priority>1.0</priority>
+  </url>
+  
+  <!-- Page d'inscription (si elle est publique) -->
+  <url>
+    <loc>https://comptalibre.vercel.app/signup</loc>
+    <lastmod>2024-05-20</lastmod>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Ajoutez ici d'autres pages publiques comme /about ou /contact -->
+</urlset>
